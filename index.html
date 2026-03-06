@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NASA Astrology & Biorhythm Calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(circle at top right, #1a1a2e, #16213e, #0f3460);
+            min-height: 100vh;
+            color: #e2e8f0;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+        }
+
+        .biorhythm-bar-bg {
+            background: rgba(255, 255, 255, 0.1);
+            height: 12px;
+            border-radius: 6px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .biorhythm-bar-fill {
+            height: 100%;
+            transition: width 1s ease-out;
+        }
+
+        .center-line {
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: rgba(255, 255, 255, 0.3);
+            z-index: 10;
+        }
+
+        .loading-spinner {
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            border-top: 3px solid #60a5fa;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <div class="max-w-4xl mx-auto">
+        <!-- Header -->
+        <header class="text-center mb-10">
+            <h1 class="text-4xl font-bold mb-2 tracking-tight">Cosmic Forecast</h1>
+            <p class="text-blue-300 opacity-80">NASA Horizons Data & Biorhythm Analysis</p>
+        </header>
+
+        <!-- Input Section -->
+        <div class="glass-card p-6 mb-8">
+            <h2 class="text-xl font-semibold mb-4">Enter Your Birth Details</h2>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                <div>
+                    <label class="block text-sm font-medium mb-1 text-slate-400">Year</label>
+                    <input type="number" id="birthYear" placeholder="1990" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1 text-slate-400">Month</label>
+                    <input type="number" id="birthMonth" placeholder="1-12" min="1" max="12" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1 text-slate-400">Day</label>
+                    <input type="number" id="birthDay" placeholder="1-31" min="1" max="31" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+                <button id="calculateBtn" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded-lg transition-all flex items-center justify-center gap-2">
+                    <span>Calculate</span>
+                    <div id="btnSpinner" class="loading-spinner hidden"></div>
+                </button>
+            </div>
+            <p id="statusMsg" class="mt-4 text-sm text-yellow-400 hidden"></p>
+        </div>
+
+        <!-- Results Section (Hidden by Default) -->
+        <div id="results" class="hidden space-y-8">
+            
+            <!-- Sun Sign & Biorhythms -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Sign Card -->
+                <div class="glass-card p-6 flex flex-col items-center justify-center text-center">
+                    <span class="text-slate-400 text-sm uppercase tracking-widest mb-2">True Sun Sign</span>
+                    <h3 id="sunSignName" class="text-5xl font-bold text-blue-400 mb-2">...</h3>
+                    <p id="sunSignDesc" class="text-slate-300 italic">Determined by NASA Solar Coordinates</p>
+                </div>
+
+                <!-- Biorhythm Card -->
+                <div class="glass-card p-6">
+                    <h3 class="text-xl font-semibold mb-4">Current Biorhythms</h3>
+                    <div class="space-y-4">
+                        <!-- Physical -->
+                        <div>
+                            <div class="flex justify-between text-sm mb-1">
+                                <span>Physical</span>
+                                <span id="valPhysical">0%</span>
+                            </div>
+                            <div class="biorhythm-bar-bg">
+                                <div class="center-line"></div>
+                                <div id="barPhysical" class="biorhythm-bar-fill bg-red-500" style="width: 50%; transform: translateX(0%);"></div>
+                            </div>
+                        </div>
+                        <!-- Emotional -->
+                        <div>
+                            <div class="flex justify-between text-sm mb-1">
+                                <span>Emotional</span>
+                                <span id="valEmotional">0%</span>
+                            </div>
+                            <div class="biorhythm-bar-bg">
+                                <div class="center-line"></div>
+                                <div id="barEmotional" class="biorhythm-bar-fill bg-blue-500" style="width: 50%;"></div>
+                            </div>
+                        </div>
+                        <!-- Intellectual -->
+                        <div>
+                            <div class="flex justify-between text-sm mb-1">
+                                <span>Intellectual</span>
+                                <span id="valIntellectual">0%</span>
+                            </div>
+                            <div class="biorhythm-bar-bg">
+                                <div class="center-line"></div>
+                                <div id="barIntellectual" class="biorhythm-bar-fill bg-green-500" style="width: 50%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Summary Text -->
+            <div class="glass-card p-6">
+                <h3 class="text-xl font-semibold mb-4 text-blue-300 border-b border-slate-700 pb-2">Analysis Summary</h3>
+                <p id="finalReport" class="text-lg leading-relaxed text-slate-200">
+                    Enter your birth date to generate your custom report.
+                </p>
+            </div>
+
+            <!-- Detailed Transit Table -->
+            <div class="glass-card overflow-hidden">
+                <div class="p-4 bg-slate-800 border-b border-slate-700">
+                    <h3 class="text-xl font-semibold">Today's Planetary Transits</h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead class="bg-slate-900 text-slate-400 text-sm uppercase">
+                            <tr>
+                                <th class="px-6 py-3 font-medium">Planet</th>
+                                <th class="px-6 py-3 font-medium">House</th>
+                                <th class="px-6 py-3 font-medium">Impact Area</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transitTable" class="divide-y divide-slate-700">
+                            <!-- Rows injected by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <footer class="mt-12 text-center text-slate-500 text-xs">
+            Data sourced from NASA JPL Horizons API. For entertainment purposes only.
+        </footer>
+    </div>
+
+    <script>
+        // --- Constants & Data Structures ---
+        const PLANETS = [
+            { name: "Sun", id: "10", keyword: "your identity and ego" },
+            { name: "Moon", id: "301", keyword: "your emotions and security" },
+            { name: "Mercury", id: "199", keyword: "communication and thinking" },
+            { name: "Venus", id: "299", keyword: "love and money" },
+            { name: "Mars", id: "499", keyword: "energy and drive" },
+            { name: "Jupiter", id: "599", keyword: "luck and expansion" },
+            { name: "Saturn", id: "699", keyword: "discipline and responsibility" },
+            { name: "Uranus", id: "799", keyword: "change and surprise" },
+            { name: "Neptune", id: "899", keyword: "dreams and intuition" },
+            { name: "Pluto", id: "999", keyword: "power and transformation" }
+        ];
+
+        const HOUSE_KEYWORDS = [
+            "Self, Identity, and Appearance", "Money and Possessions", "Communication and Local Travel",
+            "Home and Family", "Creativity and Romance", "Health and Daily Work",
+            "Partnerships and Marriage", "Shared Resources and Transformation", "Philosophy and Long-Distance Travel",
+            "Career and Public Reputation", "Friendships and Social Groups", "Spirituality and the Subconscious"
+        ];
+
+        const ZODIAC_NAMES = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"];
+
+        // --- Core Logic Functions ---
+
+        /**
+         * Parses JPL Horizons API result string for X and Y coordinates to get Longitude
+         */
+        function parsePlanetLongitude(resultText) {
+            if (!resultText) return null;
+
+            // Look for the start and end of the ephemeris data block
+            const soeIdx = resultText.indexOf("$$SOE");
+            const eoeIdx = resultText.indexOf("$$EOE");
+
+            if (soeIdx === -1 || eoeIdx === -1) {
+                console.error("NASA API returned data but could not find SOE/EOE boundaries.");
+                return null;
+            }
+
+            // Extract the relevant block
+            const dataBlock = resultText.substring(soeIdx, eoeIdx);
+
+            // Use regex to find X and Y. NASA scientific notation often includes 'E' and '+' or '-'.
+            const xMatch = dataBlock.match(/X\s*=\s*([-\d.E+]+)/);
+            const yMatch = dataBlock.match(/Y\s*=\s*([-\d.E+]+)/);
+
+            if (xMatch && yMatch) {
+                const x = parseFloat(xMatch[1]);
+                const y = parseFloat(yMatch[1]);
+                
+                let longitude = Math.atan2(y, x) * (180 / Math.PI);
+                if (longitude < 0) longitude += 360;
+                return longitude;
+            }
+
+            return null;
+        }
+
+        function getZodiacIndex(long) {
+            return Math.floor(long / 30) % 12;
+        }
+
+        async function fetchHorizons(cmd, center, startTime, stopTime) {
+            // We remove single quotes around parameter values to ensure broader proxy compatibility, 
+            // and use manual encoding.
+            const baseUrl = `https://ssd.jpl.nasa.gov/api/horizons.api`;
+            const params = new URLSearchParams({
+                format: 'json',
+                COMMAND: cmd,
+                OBJ_DATA: 'NO',
+                MAKE_EPHEM: 'YES',
+                EPHEM_TYPE: 'VECTORS',
+                CENTER: center,
+                START_TIME: startTime,
+                STOP_TIME: stopTime,
+                STEP_SIZE: '1d',
+                VEC_TABLE: '1'
+            });
+
+            const url = `${baseUrl}?${params.toString()}`;
+            
+            // Using a CORS proxy to bypass browser restrictions
+            const proxy = "https://corsproxy.io/?";
+            const response = await fetch(proxy + encodeURIComponent(url));
+            if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+            
+            const data = await response.json();
+            return data.result;
+        }
+
+        // --- UI Interactions ---
+
+        document.getElementById('calculateBtn').addEventListener('click', async () => {
+            const year = parseInt(document.getElementById('birthYear').value);
+            const month = parseInt(document.getElementById('birthMonth').value);
+            const day = parseInt(document.getElementById('birthDay').value);
+            const status = document.getElementById('statusMsg');
+            const btnSpinner = document.getElementById('btnSpinner');
+
+            if (!year || !month || !day) {
+                status.textContent = "Please enter valid birth details.";
+                status.classList.remove('hidden');
+                return;
+            }
+
+            status.textContent = "Connecting to NASA Horizons API...";
+            status.classList.remove('hidden', 'text-red-400');
+            status.classList.add('text-yellow-400');
+            btnSpinner.classList.remove('hidden');
+
+            try {
+                // 1. Calculate Birth Sun Sign
+                // We build date strings manually to avoid Local/UTC timezone shifts from new Date().toISOString()
+                const birthDateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                
+                // Calculate next day for STOP_TIME
+                const nextDayObj = new Date(Date.UTC(year, month - 1, day));
+                nextDayObj.setUTCDate(nextDayObj.getUTCDate() + 1);
+                const nextDayStr = `${nextDayObj.getUTCFullYear()}-${String(nextDayObj.getUTCMonth() + 1).padStart(2, '0')}-${String(nextDayObj.getUTCDate()).padStart(2, '0')}`;
+                
+                const birthResult = await fetchHorizons('399', '@sun', birthDateStr, nextDayStr);
+                const earthLongBirth = parsePlanetLongitude(birthResult);
+                
+                if (earthLongBirth === null) throw new Error("Could not parse NASA data for your birth date. The service might be busy.");
+                
+                let sunLongBirth = (earthLongBirth + 180) % 360;
+                const sunSignIdx = getZodiacIndex(sunLongBirth);
+
+                // 2. Fetch Current Planetary Data
+                const now = new Date();
+                const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+                const tomObj = new Date();
+                tomObj.setDate(tomObj.getDate() + 1);
+                const tomorrowStr = `${tomObj.getFullYear()}-${String(tomObj.getMonth() + 1).padStart(2, '0')}-${String(tomObj.getDate()).padStart(2, '0')}`;
+
+                status.textContent = "Mapping current planetary alignment...";
+                
+                const currentDataPromises = PLANETS.map(p => fetchHorizons(p.id, '@399', todayStr, tomorrowStr));
+                const currentResults = await Promise.all(currentDataPromises);
+
+                const currentPlanets = PLANETS.map((p, i) => ({
+                    ...p,
+                    longitude: parsePlanetLongitude(currentResults[i])
+                }));
+
+                // 3. Update UI
+                updateUI(currentPlanets, sunSignIdx, year, month, day);
+                
+                document.getElementById('results').classList.remove('hidden');
+                status.classList.add('hidden');
+            } catch (err) {
+                console.error("Application Error:", err);
+                status.textContent = "Error: " + err.message;
+                status.classList.remove('text-yellow-400');
+                status.classList.add('text-red-400');
+            } finally {
+                btnSpinner.classList.add('hidden');
+            }
+        });
+
+        function updateUI(planets, sunSignIdx, bYear, bMonth, bDay) {
+            // Sun Sign
+            document.getElementById('sunSignName').textContent = ZODIAC_NAMES[sunSignIdx];
+
+            // Biorhythms
+            const birthDate = new Date(bYear, bMonth - 1, bDay);
+            const now = new Date();
+            const daysAlive = (now - birthDate) / (1000 * 60 * 60 * 24);
+
+            const physical = Math.sin(2 * Math.PI * daysAlive / 23) * 100;
+            const emotional = Math.sin(2 * Math.PI * daysAlive / 28) * 100;
+            const intellectual = Math.sin(2 * Math.PI * daysAlive / 33) * 100;
+
+            updateBioBar('Physical', physical);
+            updateBioBar('Emotional', emotional);
+            updateBioBar('Intellectual', intellectual);
+
+            // Table & Logic for Summary
+            const tableBody = document.getElementById('transitTable');
+            tableBody.innerHTML = '';
+            
+            let posAspects = 0;
+            let negAspects = 0;
+            let focusHouseIdx = 0;
+
+            const sunSignLongitudeCenter = (sunSignIdx * 30) + 15;
+
+            planets.forEach(p => {
+                const planetSignIdx = getZodiacIndex(p.longitude);
+                const houseNum = (planetSignIdx - sunSignIdx + 12) % 12 + 1;
+                
+                const row = document.createElement('tr');
+                row.className = "hover:bg-white/5 transition-colors";
+                row.innerHTML = `
+                    <td class="px-6 py-4 font-medium text-blue-100">${p.name}</td>
+                    <td class="px-6 py-4 text-slate-300">${houseNum}${getOrdinal(houseNum)} House</td>
+                    <td class="px-6 py-4 text-slate-400 text-sm">${HOUSE_KEYWORDS[houseNum - 1]}</td>
+                `;
+                tableBody.appendChild(row);
+
+                // Aspect counting logic
+                let diff = Math.abs(p.longitude - sunSignLongitudeCenter);
+                if (diff > 180) diff = 360 - diff;
+
+                if (Math.abs(diff - 120) <= 6 || Math.abs(diff - 60) <= 6) posAspects++;
+                if (Math.abs(diff - 180) <= 8 || Math.abs(diff - 90) <= 6) negAspects++;
+                if (p.name === "Sun") focusHouseIdx = houseNum - 1;
+            });
+
+            // Summary Text
+            let summary = "";
+            if (posAspects > negAspects) {
+                summary = "Astrologically, today looks to be a positive day, with opportunities for growth and harmony. ";
+            } else if (negAspects > posAspects) {
+                summary = "Astrologically, you may face some challenges today, requiring patience and careful thought. ";
+            } else {
+                summary = "Astrologically, today brings a mix of opportunities and challenges, requiring balance. ";
+            }
+            summary += `The main focus is on the area of ${HOUSE_KEYWORDS[focusHouseIdx]}. <br><br>`;
+            
+            summary += "<strong>Biorhythm insights:</strong> ";
+            summary += getBioDescription("Physically", physical, "strong and energetic", "low on energy");
+            summary += getBioDescription("Emotionally", emotional, "positive and creative", "sensitive or withdrawn");
+            summary += getBioDescription("Intellectually", intellectual, "sharp and clear", "rest over complex tasks");
+
+            document.getElementById('finalReport').innerHTML = summary;
+        }
+
+        function updateBioBar(type, val) {
+            document.getElementById(`val${type}`).textContent = `${Math.round(val)}%`;
+            const bar = document.getElementById(`bar${type}`);
+            
+            const scaledWidth = Math.abs(val) / 2;
+            bar.style.width = `${scaledWidth}%`;
+            
+            if (val >= 0) {
+                bar.style.marginLeft = "50%";
+                bar.style.borderRadius = "0 6px 6px 0";
+            } else {
+                bar.style.marginLeft = `${50 - scaledWidth}%`;
+                bar.style.borderRadius = "6px 0 0 6px";
+            }
+        }
+
+        function getBioDescription(label, val, highTxt, lowTxt) {
+            let colorClass = "";
+            let text = "";
+            if (val > 50) {
+                colorClass = "text-green-400";
+                text = `${label}, you should be feeling ${highTxt}. `;
+            } else if (val < -50) {
+                colorClass = "text-red-400";
+                text = `${label}, you may feel ${lowTxt}. `;
+            } else {
+                text = `${label}, it's a relatively normal day. `;
+            }
+            return `<span class="${colorClass}">${text}</span> `;
+        }
+
+        function getOrdinal(n) {
+            const s = ["th", "st", "nd", "rd"];
+            const v = n % 100;
+            return (s[(v - 20) % 10] || s[v] || s[0]);
+        }
+    </script>
+</body>
+</html>
