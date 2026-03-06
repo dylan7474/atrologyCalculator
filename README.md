@@ -1,40 +1,46 @@
 # NASA Astrology Calculator
 
-A small project with two implementations of the same idea:
+NASA Astrology Calculator is a dual-interface hobby project that generates a light, astronomy-inspired daily astrology report from your birth date.
 
-- **CLI app (`main.c`)**: a terminal-based forecast generator.
-- **Web app (`index.html`)**: a browser-based UI that mirrors the C app logic.
+It includes:
 
-Both versions:
+- **CLI app (`main.c`)** for terminal use.
+- **Web app (`index.html`)** for browser use.
+
+Both implementations follow the same core ideas:
+
 - Query NASA JPL Horizons data.
-- Estimate the "true" Sun sign from solar coordinates at birth.
-- Compute simple biorhythm cycles (physical/emotional/intellectual).
-- Build a daily summary from planetary transit placement.
+- Estimate a "true" Sun sign from solar coordinates at birth.
+- Compute simple biorhythm cycles (physical, emotional, intellectual).
+- Build an aspect/transit summary for the current day.
 
 ## Repository layout
 
 - `main.c` - C implementation.
-- `index.html` - web implementation (single-file HTML/CSS/JS).
+- `index.html` - single-file HTML/CSS/JS implementation.
 - `configure.sh` - local setup helper.
 - `Makefile` - build targets for the C app.
+- `nasa_astro` - compiled CLI binary (after build).
 
-## Build and run the C app
+## Build instructions (CLI)
+
+### Option 1: via Makefile
 
 ```bash
 make
 ./nasa_astro
 ```
 
-Or directly:
+### Option 2: direct compile
 
 ```bash
 gcc main.c -o nasa_astro -lcurl -ljansson -lm
 ./nasa_astro
 ```
 
-## Run the web app
+## Run instructions (Web)
 
-Because the web version calls external APIs, run it from a local web server instead of opening the file directly:
+Serve the repository through a local HTTP server (recommended for API/CORS behavior):
 
 ```bash
 python3 -m http.server 8000
@@ -44,20 +50,49 @@ Then open:
 
 - `http://localhost:8000/index.html`
 
-## Notes on the web version
+## Basic controls
 
-- The app first tries direct access to NASA Horizons and falls back to a CORS proxy when needed.
-- Input validation checks for real calendar dates before requests are made.
-- If NASA data cannot be parsed, the app now returns a clearer, actionable error.
+### CLI (`main.c`)
+
+- Run `./nasa_astro`.
+- Enter your **date of birth** when prompted.
+- Review:
+  - derived Sun sign,
+  - current biorhythm percentages,
+  - daily transit/aspect summary.
+
+### Web (`index.html`)
+
+- Enter your **date of birth** in the date input.
+- Click the calculate/generate action button.
+- The page displays:
+  - validated birth-date feedback,
+  - Sun sign estimation,
+  - biorhythm values,
+  - daily forecast summary.
+
+## Notes
+
+- The web app attempts direct access to NASA Horizons and can fall back to a CORS proxy path.
+- Input validation checks for real calendar dates before API requests.
+- If NASA data parsing fails, the app returns a user-facing error message.
 
 ## Dependencies
 
 ### C app
+
 - `gcc`
 - `libcurl`
 - `jansson`
 - `libm`
 
 ### Web app
-- Modern browser with JavaScript enabled.
+
+- A modern browser with JavaScript enabled.
 - Network access to NASA Horizons API (or fallback proxy availability).
+
+## Short roadmap
+
+- Improve retry/timeout handling and surface clearer network diagnostics.
+- Expand forecast details while keeping `main.c` and `index.html` behavior aligned.
+- Add lightweight automated checks for date-validation and API-error paths.
